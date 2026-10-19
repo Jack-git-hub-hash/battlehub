@@ -1,1 +1,861 @@
 
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sports Mania — Four-Sport Showdown</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #07172e;
+  color: #f5f9ff;
+  font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+}
+
+main { max-width: 1000px; margin: auto; padding: 16px; }
+
+header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+h1 { font-size: clamp(24px, 4vw, 38px); margin: 4px 0; }
+p { color: #bfd4ee; margin: 4px 0 12px; }
+
+.pill {
+  background: #12335b;
+  border: 1px solid #2864a0;
+  border-radius: 999px;
+  padding: 8px 13px;
+}
+
+.profile-shell {
+  background: linear-gradient(135deg, #102e54, #081a32);
+  border: 1px solid #28527e;
+  border-radius: 20px;
+  padding: 16px;
+  margin: 14px 0 18px;
+}
+
+.profile-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.avatar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.profile-avatar {
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  border: 3px solid #68b6ff;
+  background: #173b65;
+  background-size: cover;
+  background-position: center;
+  display: grid;
+  place-items: center;
+  font-size: 50px;
+  cursor: pointer;
+}
+
+.tiny-btn, .game-tile, .avatar-choice {
+  border: 1px solid #3478bc;
+  background: #153c68;
+  color: white;
+  border-radius: 10px;
+  padding: 9px 12px;
+  cursor: pointer;
+}
+
+.username {
+  font-size: 21px;
+  font-weight: 800;
+  border: 1px solid #3478bc;
+  background: #0a1c34;
+  color: white;
+  border-radius: 10px;
+  padding: 9px 12px;
+  max-width: 260px;
+  width: 100%;
+}
+
+.game-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 8px 2px 12px;
+}
+
+.game-tile {
+  min-width: 150px;
+  text-align: left;
+  background: #102e54;
+}
+
+.game-tile.active { outline: 3px solid #53a8ff; }
+.game-tile span { font-size: 30px; display: block; }
+
+.muted { font-size: 13px; color: #a9c3e2; }
+
+canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 2px solid #2c87ff;
+  border-radius: 16px;
+  background: #178747;
+  touch-action: none;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+
+.action {
+  padding: 12px 18px;
+  border: 1px solid #3478bc;
+  background: #087cff;
+  color: white;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.panel {
+  background: #0d2545;
+  border: 1px solid #234d7a;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: start;
+  margin-top: 12px;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(3, 54px);
+  grid-template-rows: repeat(2, 48px);
+  gap: 6px;
+  justify-content: center;
+}
+
+.controls button {
+  border: 1px solid #3478bc;
+  background: #153c68;
+  color: white;
+  border-radius: 12px;
+  font-size: 19px;
+  cursor: pointer;
+}
+
+.controls .up { grid-column: 2; }
+.controls .left { grid-column: 1; grid-row: 2; }
+.controls .down { grid-column: 2; grid-row: 2; }
+.controls .right { grid-column: 3; grid-row: 2; }
+
+.status {
+  font-weight: 700;
+  min-height: 24px;
+  color: #ffdf7a;
+}
+
+.page { display: none; }
+.page.active { display: block; }
+
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 10px;
+}
+
+.avatar-choice { font-size: 40px; padding: 12px; }
+
+.wins-list { display: grid; gap: 8px; }
+
+.win-item {
+  background: #102e54;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid #28527e;
+}
+
+.trophy-fab {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 20;
+  border: 0;
+  border-radius: 50%;
+  width: 76px;
+  height: 76px;
+  font-size: 38px;
+  background: #ffca4a;
+  box-shadow: 0 6px 24px #0008;
+  cursor: pointer;
+}
+
+@media (max-width: 650px) {
+  .layout { grid-template-columns: 1fr; }
+  .panel { width: 100%; }
+}
+</style>
+</head>
+
+<body>
+<main>
+
+<header>
+  <div>
+    <h1>🏆 Sports Mania: Four-Sport Showdown</h1>
+    <p>Choose your sport and challenge the AI!</p>
+  </div>
+  <div class="pill">
+    YOU <b id="youScore">0</b> — <b id="aiScore">0</b> AI
+  </div>
+</header>
+
+<section class="profile-shell">
+  <div class="profile-top">
+    <div class="avatar-wrap">
+      <button id="profilePicture" class="profile-avatar">😎</button>
+      <button id="pictureButton" class="tiny-btn">📷 Change picture</button>
+      <input id="pictureUpload" type="file" accept="image/*" hidden>
+      <button id="avatarPageButton" class="tiny-btn">✏️ Choose avatar</button>
+    </div>
+
+    <div style="flex:1;min-width:220px">
+      <div class="muted">YOUR PROFILE · Edit your username</div>
+      <input id="usernameBar" class="username"
+        value="GameLegend" maxlength="20">
+      <div class="muted" style="margin-top:8px">
+        Your player card · Sports Mania
+      </div>
+    </div>
+
+    <div class="pill">🏆 <b id="profileWins">0</b> wins</div>
+  </div>
+
+  <div style="margin-top:16px">
+    <b>🎮 Your games</b>
+    <div class="muted">Swipe and tap a sport to play</div>
+
+    <div class="game-strip" id="gameStrip">
+      <button class="game-tile active" data-sport="soccer">
+        <span>⚽</span><b>Soccer</b>
+        <div class="muted">Play vs AI</div>
+      </button>
+      <button class="game-tile" data-sport="hockey">
+        <span>🏒</span><b>Hockey</b>
+        <div class="muted">Play vs AI</div>
+      </button>
+      <button class="game-tile" data-sport="basketball">
+        <span>🏀</span><b>Basketball</b>
+        <div class="muted">Play vs AI</div>
+      </button>
+      <button class="game-tile" data-sport="football">
+        <span>🏈</span><b>Football</b>
+        <div class="muted">Play vs AI</div>
+      </button>
+    </div>
+  </div>
+</section>
+
+<section id="avatarPage" class="panel page">
+  <div class="row">
+    <h2 style="margin:0;flex:1">✏️ Choose your avatar</h2>
+    <button class="tiny-btn" id="avatarBack">← Back to game</button>
+  </div>
+  <p>Pick a picture for your profile.</p>
+  <div class="avatar-grid" id="avatarGrid"></div>
+</section>
+
+<section id="trophyPage" class="panel page">
+  <div class="row">
+    <h2 style="margin:0;flex:1">🏆 Trophy Room</h2>
+    <button class="tiny-btn" id="trophyBack">← Back to game</button>
+  </div>
+  <p>Your match wins will appear here.</p>
+  <div id="winsList" class="wins-list">
+    <div class="win-item">No wins yet — win a match to earn your first trophy!</div>
+  </div>
+</section>
+
+<div class="row">
+  <button class="action sportpick" data-sport="soccer">⚽ Soccer</button>
+  <button class="action sportpick" data-sport="basketball">🏀 Basketball</button>
+  <button class="action sportpick" data-sport="football">🏈 Football</button>
+  <button class="action sportpick" data-sport="hockey">🏒 Hockey</button>
+</div>
+
+<canvas id="game" width="900" height="540"></canvas>
+
+<div class="layout">
+  <section class="panel">
+    <div class="row">
+      <button class="action" id="shoot">🎯 Shoot / Pass (Space)</button>
+      <button class="action" id="restart">↻ Restart match</button>
+    </div>
+    <p class="status" id="status">
+      Use arrow keys or WASD to move. Get near the ball and press Space!
+    </p>
+    <div class="muted">
+      First to 5 points wins. Shoot toward the right goal.
+    </div>
+  </section>
+
+  <section class="panel">
+    <b>Touch controls</b>
+    <div class="controls" style="margin-top:10px">
+      <button class="up" data-key="ArrowUp">↑</button>
+      <button class="left" data-key="ArrowLeft">←</button>
+      <button class="down" data-key="ArrowDown">↓</button>
+      <button class="right" data-key="ArrowRight">→</button>
+    </div>
+    <div class="muted" style="text-align:center;margin-top:8px">
+      Hold to move
+    </div>
+  </section>
+</div>
+
+</main>
+
+<button class="trophy-fab" id="trophyButton" title="Past wins">🏆</button>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const statusEl = document.getElementById('status');
+
+const avatarOptions = [
+  '😎','🐼','🦊','🐯','🐸','🐵','🤖','🐲','🦄',
+  '🐱','🐶','🐻','🐨','🦁','🐧','👽','🏆','⚡'
+];
+
+let wins = [];
+let sport = 'soccer';
+let youScore = 0;
+let aiScore = 0;
+let ended = false;
+let last = performance.now();
+let message = 'Move with arrows or WASD. Get near the ball and press Space!';
+
+const avatarGrid = document.getElementById('avatarGrid');
+
+avatarOptions.forEach(face => {
+  const button = document.createElement('button');
+  button.className = 'avatar-choice';
+  button.textContent = face;
+
+  button.addEventListener('click', () => {
+    const picture = document.getElementById('profilePicture');
+    picture.style.backgroundImage = '';
+    picture.textContent = face;
+    closePages();
+  });
+
+  avatarGrid.appendChild(button);
+});
+
+function closePages() {
+  document.querySelectorAll('.page').forEach(page =>
+    page.classList.remove('active')
+  );
+  canvas.style.display = 'block';
+  document.querySelectorAll('.sportpick').forEach(button =>
+    button.style.display = ''
+  );
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(page =>
+    page.classList.remove('active')
+  );
+  document.getElementById(id).classList.add('active');
+  canvas.style.display = 'none';
+  document.querySelectorAll('.sportpick').forEach(button =>
+    button.style.display = 'none'
+  );
+}
+
+document.getElementById('avatarPageButton').onclick =
+  () => showPage('avatarPage');
+document.getElementById('avatarBack').onclick = closePages;
+document.getElementById('trophyButton').onclick =
+  () => showPage('trophyPage');
+document.getElementById('trophyBack').onclick = closePages;
+
+function openPicturePicker() {
+  document.getElementById('pictureUpload').click();
+}
+
+document.getElementById('profilePicture').onclick = openPicturePicker;
+document.getElementById('pictureButton').onclick = openPicturePicker;
+
+document.getElementById('pictureUpload').addEventListener('change', event => {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const picture = document.getElementById('profilePicture');
+    picture.textContent = '';
+    picture.style.backgroundImage = `url("${reader.result}")`;
+  };
+  reader.readAsDataURL(file);
+});
+
+document.getElementById('usernameBar').addEventListener('change', event => {
+  event.target.value = event.target.value.trim() || 'GameLegend';
+});
+
+const keys = new Set();
+
+const player = {
+  x: 180, y: 270, r: 17, speed: 235, color: '#37a4ff'
+};
+
+const ai = {
+  x: 710, y: 270, r: 18, speed: 145, color: '#ff565e'
+};
+
+const keeper = { x: 815, y: 270, r: 23 };
+
+const ball = {
+  x: 450, y: 270, r: 10, vx: 0, vy: 0
+};
+
+function sportLabel() {
+  return {
+    soccer: 'Soccer',
+    basketball: 'Basketball',
+    football: 'American Football',
+    hockey: 'Hockey'
+  }[sport];
+}
+
+function hud() {
+  document.getElementById('youScore').textContent = youScore;
+  document.getElementById('aiScore').textContent = aiScore;
+  statusEl.textContent = message;
+}
+
+function resetPositions() {
+  player.x = 180;
+  player.y = 270;
+  ai.x = 710;
+  ai.y = 270;
+  keeper.y = 270;
+  ball.x = 450;
+  ball.y = 270;
+  ball.vx = 0;
+  ball.vy = 0;
+}
+
+function restart() {
+  youScore = 0;
+  aiScore = 0;
+  ended = false;
+  message = 'New match! Move to the ball and press Space.';
+  resetPositions();
+  hud();
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function dist(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function shoot() {
+  if (ended) return;
+
+  if (dist(player, ball) < 72) {
+    const dx = 900 - ball.x;
+    const dy = 270 - ball.y;
+    const length = Math.hypot(dx, dy) || 1;
+
+    const speed = {
+      basketball: 460,
+      football: 560,
+      hockey: 590,
+      soccer: 510
+    }[sport];
+
+    ball.vx = dx / length * speed;
+    ball.vy = dy / length * speed + (player.y - ball.y) * 1.8;
+
+    message = 'Shot away! Aim for the right goal!';
+  } else {
+    message = 'Get closer to the ball before using Space!';
+  }
+
+  hud();
+}
+
+window.addEventListener('keydown', event => {
+  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' ']
+      .includes(event.key)) {
+    event.preventDefault();
+  }
+
+  const key = event.key.toLowerCase() === ' ' ? 'space' : event.key;
+  keys.add(key);
+
+  if (event.key === ' ' && !event.repeat) shoot();
+});
+
+window.addEventListener('keyup', event => {
+  const key = event.key.toLowerCase() === ' ' ? 'space' : event.key;
+  keys.delete(key);
+});
+
+document.querySelectorAll('[data-key]').forEach(button => {
+  const key = button.dataset.key;
+
+  const down = event => {
+    event.preventDefault();
+    keys.add(key);
+  };
+
+  const up = event => {
+    event.preventDefault();
+    keys.delete(key);
+  };
+
+  button.addEventListener('pointerdown', down);
+  button.addEventListener('pointerup', up);
+  button.addEventListener('pointerleave', up);
+  button.addEventListener('pointercancel', up);
+});
+
+document.getElementById('shoot').onclick = shoot;
+document.getElementById('restart').onclick = restart;
+
+function selectSport(selectedSport) {
+  sport = selectedSport;
+  ball.r = sport === 'hockey' ? 8 : 10;
+
+  document.querySelectorAll('.game-tile').forEach(button => {
+    button.classList.toggle('active', button.dataset.sport === sport);
+  });
+
+  document.querySelectorAll('.sportpick').forEach(button => {
+    button.style.background =
+      button.dataset.sport === sport ? '#087cff' : '#153c68';
+  });
+
+  restart();
+  message = 'Playing ' + sportLabel() + '! First to 5 points wins.';
+  hud();
+  closePages();
+}
+
+document.querySelectorAll('[data-sport]').forEach(button => {
+  button.addEventListener('click', () => {
+    selectSport(button.dataset.sport);
+    canvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+});
+
+function goal(who) {
+  if (who === 'you') {
+    youScore++;
+    message = 'GOOOAL! You scored!';
+  } else {
+    aiScore++;
+    message = 'The AI scored! Chase the ball and fight back.';
+  }
+
+  if (youScore >= 5 || aiScore >= 5) {
+    ended = true;
+
+    if (youScore > aiScore) {
+      message = '🏆 YOU WIN! Amazing match!';
+
+      wins.unshift({
+        sport: sportLabel(),
+        score: youScore + '–' + aiScore,
+        date: new Date().toLocaleDateString()
+      });
+
+      document.getElementById('profileWins').textContent = wins.length;
+
+      document.getElementById('winsList').innerHTML = wins.map(win =>
+        `<div class="win-item">
+          🏆 <b>${win.sport} victory</b><br>
+          Final score: ${win.score}
+          <span class="muted"> · ${win.date}</span>
+        </div>`
+      ).join('');
+    } else {
+      message = 'The AI wins this time — press Restart and try again!';
+    }
+  }
+
+  resetPositions();
+  hud();
+}
+
+function update(dt) {
+  if (ended) return;
+
+  let mx = 0;
+  let my = 0;
+
+  if (keys.has('ArrowLeft') || keys.has('a')) mx--;
+  if (keys.has('ArrowRight') || keys.has('d')) mx++;
+  if (keys.has('ArrowUp') || keys.has('w')) my--;
+  if (keys.has('ArrowDown') || keys.has('s')) my++;
+
+  const moveLength = Math.hypot(mx, my) || 1;
+
+  player.x += mx / moveLength * player.speed * dt;
+  player.y += my / moveLength * player.speed * dt;
+  player.x = clamp(player.x, 25, 875);
+  player.y = clamp(player.y, 30, 510);
+
+  // The AI chases the ball and attacks your goal.
+  let targetX = ball.x;
+  let targetY = ball.y;
+
+  if (dist(ai, ball) < 40) {
+    targetX = 80;
+    targetY = 270;
+  }
+
+  const aiLength = Math.hypot(targetX - ai.x, targetY - ai.y) || 1;
+
+  ai.x += (targetX - ai.x) / aiLength * ai.speed * dt;
+  ai.y += (targetY - ai.y) / aiLength * ai.speed * dt;
+  ai.x = clamp(ai.x, 25, 875);
+  ai.y = clamp(ai.y, 30, 510);
+
+  keeper.y += clamp(ball.y - keeper.y, -115 * dt, 115 * dt);
+  keeper.y = clamp(keeper.y, 215, 325);
+
+  // Player nudges the ball.
+  if (dist(player, ball) < player.r + ball.r + 2) {
+    const dx = ball.x - player.x;
+    const dy = ball.y - player.y;
+    const length = Math.hypot(dx, dy) || 1;
+
+    ball.x = player.x + dx / length * (player.r + ball.r + 2);
+    ball.y = player.y + dy / length * (player.r + ball.r + 2);
+    ball.vx += mx * 70;
+    ball.vy += my * 70;
+  }
+
+  // AI nudges the ball toward your goal.
+  if (dist(ai, ball) < ai.r + ball.r + 2) {
+    const dx = ball.x - ai.x;
+    const dy = ball.y - ai.y;
+    const length = Math.hypot(dx, dy) || 1;
+
+    ball.x = ai.x + dx / length * (ai.r + ball.r + 2);
+    ball.y = ai.y + dy / length * (ai.r + ball.r + 2);
+    ball.vx += -150 * dt;
+    ball.vy += (270 - ai.y) * .6 * dt;
+  }
+
+  ball.x += ball.vx * dt;
+  ball.y += ball.vy * dt;
+  ball.vx *= Math.pow(.985, dt * 60);
+  ball.vy *= Math.pow(.985, dt * 60);
+
+  if (ball.y < ball.r || ball.y > 540 - ball.r) {
+    ball.y = clamp(ball.y, ball.r, 540 - ball.r);
+    ball.vy *= -.75;
+  }
+
+  if (ball.x < ball.r && Math.abs(ball.y - 270) < 78) {
+    goal('ai');
+    return;
+  }
+
+  if (ball.x > 900 - ball.r && Math.abs(ball.y - 270) < 78) {
+    if (dist(ball, keeper) < keeper.r + ball.r + 8) {
+      ball.x = keeper.x - keeper.r;
+      ball.vx = -Math.abs(ball.vx) * .75;
+      message = 'Keeper save! Try another shot.';
+    } else {
+      goal('you');
+      return;
+    }
+  }
+
+  if (ball.x < ball.r || ball.x > 900 - ball.r) {
+    ball.x = clamp(ball.x, ball.r, 900 - ball.r);
+    ball.vx *= -.7;
+  }
+}
+
+function circle(x, y, radius, color) {
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.8)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, 900, 540);
+
+  ctx.fillStyle =
+    sport === 'hockey' ? '#d9efff' :
+    sport === 'basketball' ? '#bd7542' :
+    sport === 'football' ? '#176c38' : '#178747';
+
+  ctx.fillRect(0, 0, 900, 540);
+
+  for (let i = 0; i < 9; i++) {
+    ctx.fillStyle = i % 2
+      ? 'rgba(255,255,255,.035)'
+      : 'rgba(0,0,0,.035)';
+    ctx.fillRect(i * 100, 0, 100, 540);
+  }
+
+  ctx.strokeStyle = 'rgba(255,255,255,.85)';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(18, 18, 864, 504);
+
+  if (sport === 'hockey') {
+    ctx.strokeStyle = 'rgba(25,70,120,.8)';
+    ctx.beginPath();
+    ctx.moveTo(450, 18);
+    ctx.lineTo(450, 522);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(450, 270, 75, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  if (sport === 'football') {
+    for (let x = 70; x < 850; x += 80) {
+      ctx.beginPath();
+      ctx.moveTo(x, 18);
+      ctx.lineTo(x, 522);
+      ctx.stroke();
+    }
+  }
+
+  if (sport === 'basketball') {
+    ctx.beginPath();
+    ctx.arc(450, 270, 70, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeRect(18, 170, 125, 200);
+    ctx.strokeRect(757, 170, 125, 200);
+  }
+
+  ctx.beginPath();
+  ctx.moveTo(450, 18);
+  ctx.lineTo(450, 522);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(450, 270, 72, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.strokeRect(18, 170, 125, 200);
+  ctx.strokeRect(757, 170, 125, 200);
+  ctx.strokeRect(18, 215, 55, 110);
+  ctx.strokeRect(827, 215, 55, 110);
+
+  ctx.fillStyle = '#dbeafe';
+  ctx.fillRect(0, 205, 18, 130);
+  ctx.fillRect(882, 205, 18, 130);
+
+  circle(keeper.x, keeper.y, keeper.r, '#ffcf45');
+  ctx.fillStyle = '#172033';
+  ctx.fillRect(keeper.x - 14, keeper.y - 5, 28, 10);
+
+  circle(player.x, player.y, player.r, player.color);
+  ctx.fillStyle = 'white';
+  ctx.font = 'bold 13px system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText('YOU', player.x, player.y - 25);
+
+  circle(ai.x, ai.y, ai.r, ai.color);
+  ctx.fillStyle = 'white';
+  ctx.fillText('AI', ai.x, ai.y - 26);
+
+  const ballColor =
+    sport === 'basketball' ? '#f58220' :
+    sport === 'football' ? '#9b6339' :
+    sport === 'hockey' ? '#172033' : '#fff';
+
+  circle(ball.x, ball.y, ball.r, ballColor);
+
+  if (sport === 'basketball') {
+    ctx.strokeStyle = '#5a260b';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+    ctx.moveTo(ball.x - ball.r, ball.y);
+    ctx.lineTo(ball.x + ball.r, ball.y);
+    ctx.moveTo(ball.x, ball.y - ball.r);
+    ctx.lineTo(ball.x, ball.y + ball.r);
+    ctx.stroke();
+  }
+
+  if (sport === 'football') {
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(ball.x - 5, ball.y);
+    ctx.lineTo(ball.x + 5, ball.y);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = 'rgba(3,15,35,.75)';
+  ctx.fillRect(290, 8, 320, 32);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 16px system-ui';
+  ctx.fillText(
+    sportLabel() + ' · YOU ' + youScore + ' — ' + aiScore + ' AI',
+    450, 30
+  );
+}
+
+function loop(now) {
+  const dt = Math.min((now - last) / 1000, .04);
+  last = now;
+  update(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+
+hud();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
